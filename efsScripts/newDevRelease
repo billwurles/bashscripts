@@ -1,0 +1,30 @@
+#!/bin/bash +x
+repo=https://MthreeDelegate:AlumniTrain%40M3%2FT1@bitbucket.org/mthree_consulting/javademos.git
+function versionIncrement {
+        split=`tr "_" " " <<< $1` #turns the underscore into a space so awk can read it
+        newVersion=$((`awk '{print $2}' <<< $split`+1)) #grabs the version number and adds 1
+}
+
+if  [ -z "$1" ]; then # Ensures all the parameters are present so the program can function
+        echo "You need to enter the name_function, meta and project names"
+        exit 1 # notifies user if they have missed something and exits with an error code
+elif [ -z "$3" ]; then
+        echo "You need to enter the meta or project name"
+        exit 1
+fi
+meta=$2 #puts real words on the parameters so its a bit more readable
+project=$3
+
+split=`tr "_" " " <<< $1`
+name=`awk '{print $1}' <<< $split` #splits the project name and desired function to separate variables
+task=`awk '{print $2}' <<< $split`
+
+thePath=/efs/dev/"$meta"/"$project"/
+
+currentVersion=`ls -lv $thePath | grep $name | grep -v 'DEV\|UAT\|PROD' | awk '{print $9}' | tail -1` # returns the name of the latest version
+versionIncrement $currentVersion #using previous result determines next version
+
+efs create release $meta $project "$name"_"$newVersion"
+git clone $repo "$thePath"/"$name"_"$newVersion"/src/
+
+exit 0

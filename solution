@@ -1,0 +1,16 @@
+me=`logname`&&for i in {1..365}
+do date=`date +%Y.%m.%d -d -"$i"day`
+filename=/data/log/$me/$date.getUniverseLSE.log
+touch filename; echo $date > $filename
+getUniverse LSE >> $filename &
+done
+
+
+
+logdir=/data/log/`logname`
+for y in {2017..2018}
+do for m in {01..12}
+do mv $logdir/$y.$m.*.getUniverseLSE.log $logdir/$y.$m
+done
+done
+

@@ -1,0 +1,40 @@
+#!/bin/bash
+repo=https://MthreeDelegate:AlumniTrain%40M3%2FT1@bitbucket.org/mthree_consulting/javademos.git
+function versionIncrement {
+        split=`tr "_" " " <<< $1` #turns the underscore into a space so awk can read it
+        newVersion=$((`awk '{print $2}' <<< $split`+1)) #grabs the version number and adds 1
+}
+
+function getCurrent { #function that returns the name of the latest version - meta,project and name are parameters
+	currentVersion=`ls -lv $thePath | grep $name | grep -v 'DEV\|UAT\|PROD' | awk '{print $9}' | tail -1`
+
+}
+meta=$2 #puts real words on the parameters so its a bit more readable
+project=$3
+
+split=`tr "_" " " <<< $1`
+name=`awk '{print $1}' <<< $split` #splits the project name and desired function to separate variables
+task=`awk '{print $2}' <<< $split`
+
+if  [ -z "$1" ]; then # Ensures all the parameters are present so the program can function
+        echo "You need to enter the username_function, meta and project names"
+        exit 1 # notifies user if they have missed something and exits with an error code
+elif [ -z "$3" ]; then
+        echo "You need to enter the meta or project name"
+        exit 1
+elif [ $task != "promoteDevToUAT" ]; then
+        echo "You need to enter the project name followed by _promoteDevToUAT"
+        exit 1
+fi
+
+thePath=/efs/dev/"$meta"/"$project"/ #creates the path of the efs project
+getCurrent #finds out what the current version is
+devVers=`readlink -f "$thePath"/"$name"_DEV | tr "/" " " | awk '{print $NF}'` #returns the name of the latest dev release
+
+efs checkpoint $meta $project "$name"_DEV #locks the source code so devs can no longer modify this version
+efs dist release $meta $project "$name"_DEV #creates a release in /efs/dist for the current dev version
+efs create releaselink $meta $project $devVers "$name"_UAT #creates a symbolic link in dev/ for the UAT team to use
+efs dist release $meta $project "$name"_UAT #creates a release in /efs/dist for the UAT version
+
+echo Dev version $currentVersion successfully promoted to UAT in $thePath
+exit 0 #exits 0 becuase there was no error

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+#this takes two arguments!!!
+
+function versionIncrement {
+	split=`tr "_" " " <<< $1` #turns the underscore into a space so awk can read it
+	name=`awk '{print $1}' <<< $split` #retrieves the name for later echoing
+	version=`awk '{print $2}' <<< $split` #grabs the version number 
+	echo The new version is "$name"_$(($version+1)) #prints out the name whilst adding 1 to the version num
+}
+
+versionIncrement $1
